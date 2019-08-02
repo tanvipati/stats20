@@ -1,0 +1,224 @@
+---
+title: "STATS 20 - Final Project"
+output: html_document
+---
+## Tanvi Pati (UID: 104901736)
+##### Worked with Alekhya Vittalam (UID: 604995902)
+
+```{r, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(stringr)
+```
+
+Loading the data:
+```{r}
+AmazonFinal5 <- load("AmazonFinal5.RData")
+glimpse(AmazonFinal5)
+```
+
+Checking the data:
+```{r}
+summary(Amazon5A)
+glimpse(Amazon5A)
+```
+  
+```{r}
+summary(Amazon5B)
+glimpse(Amazon5B)
+```
+
+All the data looked clean, as the minimums and maximums were between their defined ranges. The only concern I had was the NA's in the variable review_date in Amazon5A. Since there are only a few observations with missing values in comparison to the total number of observations, it seemed reasonable to omit them. I decided to first combine the data frames and then remove the missing observations.
+
+To combine the data frames, we can find two common variables: customer_id and review_id. To check if they were identical in both data frames:
+```{r}
+all_equal(Amazon5A$customer_id, Amazon5B$customer_id)
+all_equal(Amazon5A$review_id, Amazon5B$review_id)
+```
+In both cases, we get that the columns in both data frames are equal.  
+
+We also need to check if the number of observations in both data frames are equal.
+```{r}
+all_equal(nrow(Amazon5A), nrow(Amazon5B))
+```
+
+As the number of observations are also equal in both data frames, we can now combine them.
+```{r}
+AmazonCombined <- inner_join(Amazon5A, Amazon5B, by = c("customer_id", "review_id"))
+names(AmazonCombined)
+nrow(AmazonCombined)
+```
+After merging, we can see that the combined data frame now has the total 13 variables and total number of observations as intended.
+We can also remove the missing (NA) values now.
+```{r}
+AmazonCombined <- na.omit(AmazonCombined)
+```
+
+## The Questions
+
+###1.  
+(a)
+```{r}
+AmazonCombined %>%
+summarise(min = min(star_rating), mean = mean(star_rating), median = median(star_rating), max = max(star_rating), SD = sd(star_rating), IQR = IQR(star_rating)) %>%
+  kable()
+```
+
+* Following the range defined in the prompt (1-5), the minimum is 1 and the maximum is 5.
+* The mean and median both suggests that most books have got ratings closer to 5. The median, which divides the dataset into two equal halves is equal to the maximum star_rating. This also suggests that most of the books received higher reviews (greater than 3). Also, since our data is discrete, a mean rating of 4.456 isn't very meaningful, but does give us a sense that the average rating is closer to 4 and 5.   
+* The standard deviation suggests that 68% of the data lies within the ratings 3-5. However, it isn't completely accurate to use the sd for interpretation in this case as 1 SD away from the mean goes beyond our maximum value, i.e., 4.456 + 1.021 = 5.477, which is greater than 5.  
+* The IQR shows that 50% of our data lies between just 2 ratings (4 and 5). This could mean that there is a sharp peak in the values between the rating 4 and 5, which could also mean that the data is left-skewed (most of it lies on the higher half of the data).
+  
+(b)  
+First, we want to get the number of reviews each book has received. Then, we want to extract the ones that have reviews greater than or equal to 100. The variable "product_parent" was used to do this as it was a more comprehensive list of all the books.
+```{r}
+frequencies <- data.frame(table(AmazonCombined$product_parent))
+frequencies_100 <- frequencies[frequencies$Freq > 100, ]
+```
+   
+Next, we want to filter these specific observations out from our AmazonCombined data frame.
+```{r}
+MoreThan100 <- AmazonCombined %>% filter(product_parent %in% frequencies_100$Var1)
+```
+   
+We want to get the mean star ratings and sd for all the books that have more than 100 reviews. Then, we need to get arrange the ratings by descending order of ratings and get the top 10 rated books.
+```{r}
+summarized_ratings <- MoreThan100 %>% group_by(product_parent) %>% summarise(Mean = mean(star_rating), SD = sd(star_rating))
+head(arrange(summarized_ratings, desc(Mean))) %>% kable()
+Top10 <- summarized_ratings %>% filter(product_parent %in% summarized_ratings[1:10, ]$product_parent)
+```
+   
+Finally, we want to add the number of reviews as a column.
+```{r, warning=FALSE}
+frequencies_100_top10 <- frequencies_100 %>% filter(Var1 %in% Top10$product_parent)
+names(frequencies_100_top10) <- c("product_parent", "Number of Reviews")
+Top10Books <- inner_join(Top10, frequencies_100_top10, by = "product_parent")
+Top10Books %>% kable(caption = "Top 10 rated Books with more than 100 reviews")
+```
+
+(c)
+
+We decided to test the relation between star_rating and the length of the review body. We wanted to see if overall, those who leave shorter reviews leave higher or lower ratings.  
+To do so, we added a new variable to our data frame called "review_length" that had the number of words in each observation of review_body.
+```{r}
+AmazonCombined$review_length <- sapply(AmazonCombined[, 7], str_length)
+```
+  
+Then, the descriptive statistics of review_length for each star_rating (1-5) is needed.
+```{r}
+summarized_lengths <- AmazonCombined %>% na.omit() %>% group_by(star_rating) %>%
+  summarise(min = min(review_length), mean = mean(review_length), median = median(review_length), max = max(review_length), SD = sd(review_length), IQR = IQR(review_length))
+summarized_lengths %>% kable()
+```
+  
+For all the 5 ratings, the means seem to be much larger than the medians. This could indicate that the data is right-skewed, in the sense that books with higher ratings have lesser length reviews. Hence, it is also unrealistic to look at the SD for further interpretation. The IQRs suggest that 50% of the difference between 75% of the review lengths and 25% of the review lengths is relatively high. So, there must not be a sharp peak at any point, but a rather gentler decrease.   
+To test this further and see if the ratings for shorter reviews are significantly higher than for longer reviews, a t-test was conducted. First, we split the data into two groups - shorter and longer reviews.
+```{r}
+summary(AmazonCombined$review_length)
+AmazonCombined$review_length_group <- cut(AmazonCombined$review_length,
+                                breaks = c(1, 190, 48751),
+                                labels = c("Short Reviews", "Long Reviews"))
+table(AmazonCombined$review_length_group)
+```
+
+Then, the t-test for star_rating with review_length_group was done to check for significance.
+```{r}
+t.test(star_rating ~ review_length_group, data = AmazonCombined)
+```
+   
+The p-value is lesser than 0.05, which indicates significance. Hence, the ratings for short reviews are significantly greater than those for long reviews.
+
+###2.  
+
+Bouncing off 1. (c), we decided to graph the summarized review_length for each star_rating.
+We decided to use the median instead of the mean in this case as it seemed to be a better representation of the "average".
+```{r}
+ggplot(summarized_lengths, aes(x = as.factor(star_rating), y = median)) +
+  geom_col(fill = "turquoise") +
+  ggtitle("Median Review Lengths for each Star Rating") +
+  labs(x = "Star Rating", y = "Median Review Lengths") +
+  theme_classic()
+```
+   
+We can see that the highest median review length is for star rating 2 and lowest is for 5. Also, the median length of review for 4 and 3 is lower than that for 2 and 1. This is consistent with our t-test results from 1. (c). 
+
+We also wanted to see if length of review mattered for a review to get helpful votes. We wanted to see how this might be different for each of the star ratings. Furthermore, we wanted to get a sense of how many of these were verified purchases. To do so, we made a facet grid of scatterplots with the regression line.
+```{r, warning=FALSE, message=FALSE}
+ggplot(AmazonCombined, aes(y = review_length, x = helpful_votes)) +
+  geom_point(alpha = 0.5, color = "purple") +
+  geom_smooth(method = "lm") +
+  facet_wrap(~factor(star_rating)) +
+  ggtitle("Amazon Review Lengths vs. Helpfulness for each Star Rating") +
+  labs(x = "Helpful Votes", y = "Review Length") +
+  theme_minimal()
+```
+  
+As we can see in the graph, the reviews for star rating 1 are the most helpful. This could mean that the reviews are more critical than the ones for other stars. Stars 1 & 5 seem to be more helpful than the ones for star rating 2, 3 & 4. This could be because the reviewers at both extremes might have more to complain or compliment than the ones in the middle ratings.
+
+###3.
+
+**Hypothesis:**  Longer reviews will get more helpful votes than shorter reviews regardless of verified or non-verified purchasers.  
+  
+**Outline + Pseudocode:**  
+1. Find the correlation between the helpful votes and length of review   
+    + cor between helpful_votes, review_length   
+2. Find the summary statistics of helpful votes for the two groups of review length  
+    + From the data frame AmazonCombined, group by review_length_group   
+    + summarise min, max, mean, median, sd, and IQR  
+3. Conduct a t-test for helpful votes and the two groups of review length  
+    + t.test with helpful_votes against review_length_group  
+4. Find the summary statistics of helpful votes for verified/not verified purchasers   
+    + From the data frame AmazonCombined, group by verified_purchase   
+    + summarise min, max, mean, median, sd, and IQR  
+5. Conduct a t-test for helpful votes and the two groups of verified purchase  
+    + t.test with helpful_votes against verified_purchase  
+6. Fit a linear regression model for helpful votes with review length and verified purchase  
+    + linear model of helpful_votes against review_length + verified_purchase  
+    
+**Implementation:**  
+First, we want to find the correlation between helpful votes and length of review:
+```{r}
+cor(AmazonCombined$helpful_votes, AmazonCombined$review_length)
+```
+  
+This shows us that there isn't a high association between helpful votes and review length. We can take another step and look at the summary statistics for the two groups of review length.
+```{r, warning=FALSE, message=FALSE}
+AmazonCombined %>% na.omit() %>% group_by(review_length_group) %>%
+  summarise(min = min(helpful_votes), max(helpful_votes), 
+            mean(helpful_votes), median = median(helpful_votes), 
+            sd = sd(helpful_votes), IQR = IQR(helpful_votes)) %>% kable()
+```
+  
+This appears to show us that longer reviews do have more helpful votes than shorter reviews as the mean and median for long reviews is larger than that for short reviews. Also, the maximum helpful votes for short reviews is only 433, whereas for long reviews it's a much larger number, 2893.  
+To test if this difference is significant, we can conduct a t-test.
+```{r}
+t.test(helpful_votes ~ review_length_group, data = AmazonCombined, alternative = "less")
+```
+  
+Since the p-value is less than 0.05, we can see that short reviews do have significantly lesser helpful votes than long reviews, consisten with our hypothesis.
+
+Now, we can take the same steps for verified purchases. First, we'll find the summary statistics:
+```{r, message=FALSE, warning=FALSE}
+AmazonCombined %>% na.omit() %>% group_by(verified_purchase) %>%
+  summarise(min = min(helpful_votes), max = max(helpful_votes), 
+            mean = mean(helpful_votes), median = median(helpful_votes), 
+            sd = sd(helpful_votes), IQR = IQR(helpful_votes)) %>% kable()
+```
+  
+Contrary to our hypothesis, this seems to show an overall greater number of helpful votes for non-verified purchases than verified purchases.  
+To check if this difference is significant, we can conduct a t-test.
+```{r}
+t.test(helpful_votes ~ verified_purchase, data = AmazonCombined)
+```
+   
+The p-value is indicating a significant difference between the two groups, which is contrary to our hypothesis.
+
+Finally, we can attempt to predict helpfulness from a combination of review length and verified purchase.
+```{r}
+model <- lm(helpful_votes ~ review_length + verified_purchase, data = AmazonCombined)
+summary(model)
+```
+   
+From the p-values in the regression model, we can see that review length and verified purchase have a significant values.    
+This could show that helpfulness is affected by review length as longer reviews tend to get higher helpful votes than shorter ones. Verified purchases also affect helpful votes, unlike predicted in the hypothesis. Buyers probably look at the content and length of the review but give equal importance to whether a review is made by a verified purchaser or not. This could help buyers know that longer reviews are generally more reliable as they are more helpful.  

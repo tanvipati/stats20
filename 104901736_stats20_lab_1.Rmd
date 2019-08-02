@@ -1,0 +1,394 @@
+---
+title: "Lab 1"
+output: html_document
+---
+
+#### Tanvi Pati
+#### UID: 104901736
+
+# 1.  
+a. **F(n)** (function)  
+    + input: **n**  
+    + output: Fibonacci number of n  
+    + create an object x and assign to it the value 0  
+    + create an object y and assign to it the value 1  
+    + create an object i as a counter and assign to it the value 1  
+    + if n is less than 1  
+        + ask user to input a non-zero positive integer  
+    + else  
+        + while i is less than n  
+            + assign a 'temp' variable with the value a + b  
+            + shift the value of b to a  
+                + a <- b  
+            + shift the value of temp to b  
+                + temp <- b  
+            + increment i by 1  
+    + return the value of b  
+        
+b. **F_vector(n)** (function to create vector of first n numbers in the Fibonacci sequence)  
+    + create an empty vector x  
+    + for value i in 1 to n
+        + if i is equal to 1 or i is equal to 2
+            + assign the position i in the vector x as 1
+        + else
+            + assign the value of the position i in vector x as the sum of values in position i - 1 and i - 2 of x
+      + return the vector x
+
+c.
+```{r}
+fibo <- function(n){
+  x <- 0
+  y <- 1
+  i <- 1
+  if (n < 1){
+    return("Please input a positive, non-zero integer")
+  }
+  else{
+    while(i < n){
+      temp <- x + y
+      x <- y
+      y <- temp
+      i <- i + 1
+    }
+  }
+  return(y)
+}
+```
+
+d.  
+```{r}
+fibo(58)
+```
+
+# 2.
+a. Rules of the game Tic-Tac-Toe:  
+    + A 3x3 grid is drawn
+    + There are 2 players - each decides to either draw X's or O's
+    + Player X starts by drawing an X in any of the 9 cells
+    + Player O follows by drawing an O in any of the remaining cells
+    + The players alternate doing so, with the aim to get X's or O's in three adjacent cells either vertically, horizontally or diagonally
+    + The first player to get three X's or O's in the same vertical or horizontal row or across the diagonal is declared the winner
+    
+b. High Level Pseudocode:
+    + Before the game:
+        + Draw a 3x3 grid
+        + 2 players choose between drawing X or O
+    + During the game:
+        + Player X starts
+        + The players alternate drawing either X's or O's as previously decided in remaining cells
+        + Draw until a player has 3 X's or 3 O's in vertically, horizontally or diaonally adjacent cells
+    + After the game:
+        + Declare winner
+
+c.
+    + Objects that need to be tracked:  
+        + 3x3 Matrix
+        + Number of cells filled with X's  
+        + Number of filled with O's  
+        + Player's turn
+    i.   
+        1.  
+        + A character matrix can be used to store the number of cells filled with X's or O's  
+            + Players input the cell number in which they want their 'X' or 'O' to be filled.
+            + Based on which player's turn it is, the character matrix's cell calue will be updated with either an 'X' or 'O'.
+            + A matrix would help us easily access rows or columns and check equality of their values.
+        + A length-2 vector object containing the value of row and column can be used to track the cell position in the matrix
+        + An integer that is a global variable nTurn is assigned the integer 0
+            + This will keep incrementing by 1 till 9 as long as winner is FALSE
+            
+d. Individual Functions:
+    + **updateMatrix**: A function that adds a value to a cell of the matrix (based on the player)
+        1. input: player, cell position (length-2 vector containing row and column value)
+        2. output: updated 3x3 character matrix with cell filled with appropriate character 'X' or 'O'
+        3. process:
+            + access the position of the matrix given as input
+            + assign the value **'X'** or **'O'** by calling **player**
+            
+    + **endGame**: A function that declares the winner of the game
+        1. input: nothing
+        2. output: string declaring the winner or tie game
+        3. check if nTurn is less than or equal to 9
+            + output string "You won!"
+            + else, output " Tie Game!"
+            
+    + **winner**: A function to keep track of equality in cell values of rows, columns or diagonals as long as nTurn is less than or equal to 9
+        1. input: updated 3x3 character matrix
+        2. output: logical value (TRUE, FALSE)
+        3. process:
+            + loop through rows and check if elements of any row are equal
+                + if they are equal, call **endGame** and return TRUE
+                + if they are not equal, switch player's turn
+            + loop through columns and check if elements are any column are equal
+                + if they are equal, declare winner by calling **endGame** and return TRUE
+                + if they are not equal, switch player's turn
+            + loop through the cells that make up the diagonals and check if their elements are equal
+                + if they are equal, declare winner by calling **endGame** and return TRUE
+                + if they are not equal, switch player's turn
+            
+    + **checkCell**: A function that checks if the cell is filled  
+        1. input: cell position (length-2 vector containing row and column number)
+        2. output: logical value (TRUE, FALSE)
+        3. process:
+            + access cell position inputted
+            + if cell is filled, ask for new input
+            + else, call **updateMatrix** for the inputted cell position
+            
+    + **player**: A function that determines which player is X or O
+        1. input: nothing
+        2. output: **'O'** or **'X'** based on nTurn
+        3. process:
+            + if nTurn modulus 2 is equal to 0, assign **'O'**
+            + else, return **'X'**
+        
+    + **turn**: A function that increments the value of nTurn till it's equal to 9
+        1. input: nothing
+        2. output: the updated integer value of nTurn
+        3. check if nTurn is less than equal to 9
+            + if is it, add 1 to it
+            + else, call **endGame**
+
+e.  
+    + The game of Tic-Tac-Toe has a maximum of 9 turns. Before the game starts, a 3x3 empty grid is made. 
+    + The player who chose X's (Player X) begins the game and can put an X in any cell in the grid. 
+    + As depicted by the table below, the player puts an X in the cell in the 1st row and 1st column of the grid. The checkCell function checks if that cell is already filled; it is not, so it returns FALSE. The matrix gets updated by calling **updateMatrix** and has a filled cell in row 1, column 1. The **winner** function checks whether three adjacent cells of a row, column or diagonal are filled with the same value. In this case they're not, so the turn gets passed on to Player O.  
+    + Player O can put an 'O' in any cell in the grid except row 1, column 1. Player O fills the cell in the 3rd row, 3rd column. **checkCell** checks if that cell is filled; it isn't. The matrix gets updated by calling **updateMatrix** and the cell in row 3, column 3 is filled. The function **winner** doesn't find the winning condtions to be true. 
+    + The  turn gets passed back to Player X. They input X in row 1, column 3. **checkCell** finds that to be empty, so the matrix gets updated by calling **updateMatrix** to have an 'X' in row 1, column 3. **winner** doesn't find the winning conditions to be true. 
+    + The turn gets passed back to Player O. They fill the cell in row 2, column 2. **checkCell** finds that cell to be empty and the matrix gets updated by calling **updateMatrix**. **winner** finds these aren't the winning conditions, so the turn gets passed on to Player X. 
+    + Player X fills the cell in row 1, column 2. The **checkCell** function finds that the cell is empty, so the matrix gets updated. The **winner** function finds the first row  (three horizontal adjacent cells) to have the same value, and that value is X, so it returns TRUE and Player X is declared as the winner.  
+
+turn | player | checkCell | updateMatrix | winner
+-----|--------|-----------|---------------|-------
+  0  |   O    |  FALSE    |     matrix    | FALSE
+  1  |   X    |  FALSE    |  matrix[1, 1] | FALSE
+  2  |   O    |  FALSE    |  matrix[3, 3] | FALSE
+  3  |   X    |  FALSE    |  matrix[1, 3] | FALSE
+  4  |   O    |  FALSE    |  matrix[2, 2] | FALSE
+  5  |   X    |  FALSE    |  matrix[1, 2] | TRUE
+
+f.  
+    i. The simplest AI opponent would find a random empty cell in the matrix and fill it with either an X or O, which will be pre-decided.
+        1. Pseudocode:
+        + Functions:
+            + **checkCell**:
+                + inputs: cell position (**randomRow** and **randomCol**)
+                + output: TRUE (if that cell is filled) or FALSE (if that cell is not filled)
+            + **updateMatrix**:
+                + inputs: cell position (length-2 vector containing **randomRow** and **randomColumn**)
+                + outputs: updated 3x3 character matrix with that cell filled
+            + The **winner** function is called in the next step:
+                + inputs: updated 3x3 matrix
+                + outputs: TRUE or FALSE (based on winning conditions of tic-tac-toe)
+            + The **player** function is called in the next step:
+                + input: nothing
+                + output: **'O'** or **'X'**
+            + The **turn** function is called in the next step:
+                + input: nothing
+                + output: the updated integer value of nTurn
+            
+        + Game play:
+            + input: **'X'** or **'O'**, based on the player's preference
+            + ouptut: declared winner
+            + Human decides if they are Player X or Player O. The other one gets assigned to AI.
+            + If human decides to be Player X, they start.
+            + Else, AI starts.
+            + Assign a random number from 1 to 3 to the variable **randomRow**
+            + Assign a random number from 1 to 3 to the variable **randomCol**
+            + while **checkCell** for the cell position of **randomRow** and **randomCol** is not empty
+                + assign a random number from 1 to 3 to **randomRow**
+                + assign a random number from 1 to 3 to **randomCol**
+            + After the cell is found to be empty, **updateMatrix** is called on the **randomRow** and **randomCol** to update the cell in this position of the matrix with either X or O, based on which player the AI is
+            + The **winner** function is called
+              + if TRUE, call **endGame**
+              + if FALSE and nTurn is not 9, turn is passed on to opposing player by calling the **turn** function
+              + else, call **endGame**
+
+    ii. A sophisticated tic-tac-toe AI would predict if the opposing player will win in the next move and fill the appropriate cell. If not, it should figure out the best strategy for it to win and fill the appropriate cell.
+        +  1. Pseudocode:
+            + Functions:
+                + **checkCell**:
+                        + inputs: cell position (length-2 vector containing **randomRow** and **randomCol**)
+                        + output: TRUE (if that cell is filled) or FALSE (if that cell is not filled)
+                + **turn**:
+                    + input: nothing
+                    + output: the updated integer value of nTurn
+                + The **player** function is called in the next step:
+                    + input: nothing
+                    + output: **'O'** or **'X'**
+               + **updateMatrix**:
+                    + inputs: cell position (length-2 vector containing **randomRow** and **randomColumn**)
+                    + outputs: updated 3x3 character matrix with that cell filled
+                + **predict**:
+                    + input: updated 3x3 matrix
+                    + output: length-2 vector containing 1st element as row number and 2nd as column number
+                + **winner**:
+                    + inputs: updated 3x3 matrix
+                    + outputs: TRUE or FALSE (based on winning conditions of tic-tac-toe)
+                 + **attemptToWin**:
+                    + input: updated 3x3 character matrix
+                    + output: length-2 vector containing row and column number
+            
+            + Game play:
+              + input: **'X'** or **'O'**, based on the player's preference
+              + ouptut: declared winner
+              + Human decides if they are Player X or Player O. The other one gets assigned to sophisticated AI.
+              + If human decides to be Player X, they start.
+              + Else, AI starts.
+              + If nTurn is less than or equal to 3
+                + Assign a random number from 1 to 3 to the variable **randomRow**
+                + Assign a random number from 1 to 3 to the variable **randomCol**
+                + while **checkCell** for the cell position of **randomRow** and **randomCol** is not empty
+                    + assign a random number from 1 to 3 to **randomRow**
+                    + assign a random number from 1 to 3 to **randomCol**
+                + After the cell is found to be empty, **updateMatrix** is called on the **randomRow** and **randomCol** to update the cell in this position of the matrix with either X or O, based on which player the AI is
+            + else
+                + The sophisticated AI calls **predict**
+                    + **predict** checks if there are any rows, columns, or diagonals with 2 of the opposing player's values (so if AI was Player X, the function would search for **'O'**s)
+                    + if there are, the function returns a vector containing the row and column number of the empty adjacent cell by using **checkCell**
+                        + **updateMatrix** is called and the cell is filled with appropriate value
+                        + The **winner** function is called
+                            + if TRUE, call **endGame**
+                            + else if FALSE and nTurn is not 9, turn is passed on to opposing player by calling the **turn** function
+                            + else, call **endGame**
+                      + AI calls the **attemptToWin** function, which loops through the rows, columns and cells of diagonals in the matrix to see if there are any 2 cells in these that have its own values (so if AI was Player X, the function would search for **'X'**s)
+                          + if there is at least 1 equal values in a row, column or diagonal
+                              + find an adjacent cell in that row/column/diagonal is empty using **checkCell** and fill with player's value using **updateMatrix**
+                          + The **winner** function is called
+                            + if TRUE, call **endGame**
+                            + else if FALSE and nTurn is not 9, turn is passed on to opposing player by calling the **turn** function
+                            + else, call **endGame**
+    
+g.  
+    i.  
+        + input: nothing
+        + output: which player is the winner
+        + Assign Player X and Player O randomly to simple AI and sophisticated AI.
+        + Player X starts
+            + if simple AI is Player X, call the function for simple AI to play the game
+            + else, call the sophisticated AI's function to play the game
+        + Alternate their turns as long as winner is FALSE and nTurn is less than or equal to 9
+        + Declare winner
+        
+    ii.
+        + input: number of games user wants the AIs to play
+        + for a counter i in 1 to number of games to play
+            + play the game as mentioned in g. i.
+            
+h.  
+    + Setup the game:
+        + make matrix
+            + process: create a matrix with 3 rows and 3 columns
+        + **player**: choose player X and player O (function)
+            + input: nothing
+            + output: **'O'** or **'X'**
+            + process:
+                + if nTurn modulus 2 is equal to 0, assign **'O'**
+                + else, return **'X'**
+
+    + Play the game:
+        + **game** (function)
+            + input: nothing
+            + output: string with declared winner
+            + process:
+                + make 3x3 matrix
+                + call **player** and **turn**
+                + allow Player X to input row and column number
+                + call **checkCell** to check if the cell is empty
+                  + if it is empty
+                      + call **updateMatrix**
+                      + call **winner**
+                  + if it is not empty
+                      + allow player to input a new cell position
+
+        + **turn** (function)
+            + input: nothing
+            + output: the updated integer value of nTurn
+            + check if nTurn is less than equal to 9
+                + if is it, add 1 to it
+                + else, call **endGame**  
+            
+        + **updateMatrix** (function)
+            + input: player, cell position (length-2 vector containing row and column value)
+            + output: updated 3x3 character matrix with cell filled with appropriate character 'X' or 'O'
+            + process:
+                + access the position of the matrix given as input
+                + assign the value **'X'** or **'O'** by calling **player**
+            
+        + **checkCell** (function)
+            + input: cell position (length-2 vector containing row and column number)
+            + output: logical value (TRUE, FALSE)
+            + process:
+                + access cell position inputted
+                + if cell is filled, ask for new input
+                + else, call **updateMatrix** for the inputted cell position  
+            
+        + **winner** (function)
+            + input: updated 3x3 character matrix
+            + output: logical value (TRUE, FALSE)
+            + process:
+                + loop through rows and check if elements of any row are equal
+                    + if they are equal, call **endGame** and return TRUE
+                    + if they are not equal, switch player's turn
+                + loop through columns and check if elements are any column are equal
+                    + if they are equal, declare winner by calling **endGame** and return TRUE
+                    + if they are not equal, switch player's turn
+                + loop through the cells that make up the diagonals and check if their elements are equal
+                    + if they are equal, declare winner by calling **endGame** and return TRUE
+                    + if they are not equal, switch player's turn  
+            
+    + The player who gets three cells their chosen value in three adjacent cells in a row, column or diagonal is declared the winner
+    
+i.
+
+Setup game:
+```{r}
+tictactoe_matrix <- matrix(, nrow = 3, ncol = 3)
+```
+```{r}
+nTurn <- 0
+```
+```{r}
+player <- function(){
+  if(nTurn %% 2 == 0){
+    return('O')
+  }
+  else{
+    return('X')
+  }
+}
+```
+
+Play the game:
+```{r}
+turn <- function(){
+  if(nTurn <= 9){
+    return(nTurn + 1)
+  }
+  else{
+    endGame()
+  }
+}
+```
+```{r}
+checkCell<- function(row_col_vector){
+  r <- row_col_vector[1]
+  c <- row_col_vector[2]
+  return(is.na(tictactoe_matrix[1][2]))
+}
+```
+```{r}
+endGame <- function(){
+  if(nTurn <= 9){
+    return("You won!")
+  }
+  else{
+    return("Tie Game!")
+  }
+}
+```
+```{r}
+updateMatrix <- function(row_col_vector){
+  r <- row_col_vector[1]
+  c <- row_col_vector[2]
+  tictactoe_matrix[r][c] <- player()
+}
+```

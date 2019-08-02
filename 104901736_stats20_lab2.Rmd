@@ -1,0 +1,64 @@
+---
+title: "STATS 20: Lab 2"
+output: html_document
+---
+
+### Tanvi Pati
+### UID: 104901736
+
+* Extracting the data:
+```{r}
+library(readr)
+library(ggplot2)
+
+simpsons <- read_csv("simpsons_episodes.csv")
+simpsons <- na.omit(simpsons)
+str(simpsons)
+```
+
+
+
+1. The visualization
+```{r}
+ggplot(simpsons, aes(x = season, y = imdb_rating, color = us_viewers_in_millions)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(color = "black", method = 'loess') +
+  xlab("Season") + ylab("IMDb Rating") +
+  scale_color_continuous(name = "Number of US Viewers (in millions)", low = "turquoise", high = "red") +
+  theme_bw()
+```
+
+
+2. The Brief Write-Up
+    + This graphic was produced in a group with Alekhya Vittalam (UID: 604995902).
+    + With this scatter plot, I am attempting to effectively communicate the decline in IMDb rating over the seasons of the TV show Simpsons. The data also shows the decline in Number of US Viewers (in millions). We chose to show the decrease in IMDb Rating using a scatter plot. The number of US viewers (in millions) is shown by the color of the points in the scatter plot. The redder the dots, the more viewers there were. As we can see, the dots are redder and more dense during the first few seasons and change to turquoise for the last few seasons.
+    + After omitting rows with "NA", we used the columns "imdb_rating", "season" and "us_viewers_in_millions". I didn't address "original_air_year" as I thought it would be very similar to "season" - the only difference would be the year instead of the season number. The IMDb rating in both cases would be the same, but seeing how it changed over the years made more sense to me than how it was rated on the original air year. I also didn't include "imdb_votes" as I think "imdb_rating" seemed to be be a more understandable piece of the data. As "season" was already part of the data we were using, "number_in_season" and "number_in_series" didn't seem to be as necessary to use. Other variables like "image_url", "production_code", "title" and "video_url" didn't seem to be relevant to the story we wanted to portray through the data.
+    + Our group's choices for the visualization was a scatter plot of 'IMDb Rating' against 'Season' for which the individual dots are colored based on how many viewers there were in the US in millions. We chose to use a scatter plot as it is best to see the ratings for each episode in a season. We also thought it would be better to see the clusters of episodes around a certain IMDb rating. With an alpha of 0.5, we can see the density of episodes for a particular rating in a season. The color gradient from red to turquoise also makes it more clear to see the reduction in viewers in the US. If the dots are redder, there are more viewers, whereas if the dots are more turquoise, there are lesser viewers. We used a smoothed conditional mean curve with the 'loess' method as it is clearer to visualize the decline in mean IMDb rating over the seasons. Our scaling for seasons was from 1 - 28. However, for the y-axis, the IMDb rating starts at 5 and goes up to 9.5. This was done so that the difference between the individual data points as well as the decrease in IMDb rating is more evident. I changed the theme to black and white as I felt the dots pop out clearly and the gridlines serve as guidance. Our data filtering simply omitted 3 rows with missing data. All these decisions helped us communicate efficiently that the IMDb rating decreased over several seasons, as did the number of viewers in the US.  
+      
+        
+3. The Open-Ended Questions  
+    A. Three columns I would add:  
+    * Number of viewers on Hulu (streaming website) - this would contain data of type 'num' and column name could be 'hulu_viewers'. This data would be the number of viewers who stream The Simpsons but not on Live TV. We could obtain this information from Hulu.
+    * Profit - this would contain data of type 'num' and column name could be 'profit'. This data would be the profit made on each episode when it aired on the Fox Network. We could obtain this information from Fox Network.
+    * List of Directors - this would contain data of type 'character' and a column name could be 'directors'. This data would show us the director for each episode, as there were multiple directors over the seasons. I found this link from which we could potentially use web scraping to obtain the data: https://en.wikipedia.org/wiki/List_of_directors_of_The_Simpsons.  
+    
+    B. Additional Questions:
+    * With the profit and the list of directors, we could ask: How much profit did each director make?
+    * With the number of viewers on Hulu and the number of viewers in the US, we could ask: Were there more viewers when the show aired on Fox or are their more viewers on Hulu?
+    * With the list of directors and IMDb rating, we could ask: What was the average IMDb rating received for each director's episodes?
+    * With profit and season, we could ask: How did the profit vary over the seasons?
+    
+    C. (Uploaded)  
+    
+
+###### Extra Credit:
+* set up the base layer with x-axis as profit and y-axis as season
+* using mutate, make a new variable called profit_type
+    + if profit is less than 0, it is 'below0', else 'above0'
+* add a bar graph layer with stat='identity' and fill the aes() with profit_type
+* fill the values for 'below0' with the color red and the values for 'above0' with the color dark green.
+    + change the labels to "Above 0" and "Below 0" appropriately
+* change the title of the x-axis to "PROFIT (in millions)" and y-axis to "SEASON".
+
+    
+
